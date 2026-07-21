@@ -1,26 +1,21 @@
-# base
-FROM node:22.16.0-alpine AS base
+FROM node:20-alpine
 
 WORKDIR /app
 
-# builder
-FROM base AS builder
-
+# Copy package files
 COPY package*.json ./
 
-RUN npm ci --legacy-peer-deps
+# Install dependencies
+RUN npm install --legacy-peer-deps
 
-COPY backend/ ./backend/
+# Copy source code
+COPY . .
 
+# Build TypeScript
 RUN npm run build
 
-# runtime
-FROM base AS runtime
+# Expose port
+EXPOSE 10000
 
-COPY --from=builder /app/backend/dist ./backend/dist
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/node_modules ./node_modules
-
-EXPOSE 5000
-
+# Start the server
 CMD ["npm", "start"]
