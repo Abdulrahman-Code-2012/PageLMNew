@@ -11,11 +11,5 @@
       "src": "/(.*)",
       "dest": "backend/src/index.ts"
     }
-  ],
-  "env": {
-    "GOOGLE_API_KEY": "AIzaSyCgtE-x235LxhVRv44nFznNwh_PglCA18o",
-    "GROQ_API_KEY": "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",
-    "PORT": "3000",
-    "NODE_ENV": "production"
-  }
+  ]
 }
