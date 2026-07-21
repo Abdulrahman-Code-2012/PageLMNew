@@ -14,4 +14,8 @@
   "devDependencies": {
     "concurrently": "^8.2.0"
   }
+  {
+  "scripts": {
+    "vercel-build": "cd backend && npm run build"
+  }
 }
