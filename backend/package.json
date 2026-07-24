@@ -14,8 +14,8 @@
 "@langchain/core": "^0.3.58",
 "@langchain/google-genai": "^0.2.16",
 "@langchain/langgraph": "^0.2.39",
-"@langchain/openai": "^0.4.9"
-    "langchain": "^0.3.30"
+"@langchain/openai": "^0.4.9",
+    "langchain": "^0.3.30",
     "@pdf-lib/fontkit": "^1.1.1",
     "better-sqlite3": "^11.0.0",
     "cors": "^2.8.5",
