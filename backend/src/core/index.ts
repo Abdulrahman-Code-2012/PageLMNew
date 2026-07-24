@@ -12,7 +12,10 @@ app.use(loggerMiddleware);
 
 // CORS
 app.use(cors({
-  origin: "*",
+  origin: [
+    "https://pagelm.netlify.app",
+    "http://localhost:5173"
+  ],
   methods: [
     'GET',
     'POST',
@@ -28,7 +31,13 @@ app.use(cors({
   credentials: true,
 }));
 
-app.options('*', cors());
+app.options('*', cors({
+  origin: [
+    "https://pagelm.netlify.app",
+    "http://localhost:5173"
+  ],
+  credentials: true
+}));
 
 
 // Static files
