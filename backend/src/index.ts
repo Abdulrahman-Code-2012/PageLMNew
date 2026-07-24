@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import cors from "cors";
-import { registerRoutes } from "./core/routes";
+import { registerRoutes } from "./core";
 import server from "./utils/server/server";
 
 
