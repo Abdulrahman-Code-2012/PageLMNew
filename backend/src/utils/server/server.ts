@@ -425,4 +425,4 @@ function server() {
 }
 
 
-module.exports = server;
+export default server;
