@@ -56,7 +56,7 @@ registerRoutes(app);
 // Start server (Render)
 const PORT = Number(process.env.PORT || 5000);
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`[pagelm] running on port ${PORT}`);
 });
 
