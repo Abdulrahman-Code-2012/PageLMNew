@@ -1,60 +1,55 @@
-// backend/src/core/index.ts
-import fs from 'fs'
-import cors from 'cors'
-import path from 'path'
-import server from '../utils/server/server'
-import { registerRoutes } from './router'
-import { loggerMiddleware } from './middleware'
+import cors from 'cors';
+import server from '../utils/server/server';
+import { registerRoutes } from './router';
+import { loggerMiddleware } from './middleware';
 
-// Load environment variables only if .env exists (local only)
-const envPath = path.resolve(process.cwd(), '.env')
+const app = server();
 
-if (fs.existsSync(envPath)) {
-  process.loadEnvFile(envPath)
-}
 
-const app = server()
+// Logger
+app.use(loggerMiddleware);
 
-// Middleware
-app.use(loggerMiddleware)
 
+// CORS
 app.use(cors({
   origin: "*",
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS'
+  ],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization'
+  ],
   credentials: true,
-}))
+}));
 
-app.options('*', cors())
-
-app.use(app.serverStatic("/storage", "./storage"))
-
-// Register routes
-registerRoutes(app)
-
-// Export for Vercel
-export default app
+app.options('*', cors());
 
 
-// Start server locally
-if (process.env.NODE_ENV !== 'production' && process.env.VERCEL !== '1') {
-  const PORT = Number.parseInt(process.env.PORT || '5000')
-
-  app.listen(PORT, () => {
-    console.log(
-      `[pagelm] running on ${process.env.VITE_BACKEND_URL || `http://localhost:${PORT}`}`
-    )
-  })
-}
+// Static storage files
+app.use(
+  app.serverStatic(
+    "/storage",
+    "./storage"
+  )
+);
 
 
-// Start server on Render
-if (require.main === module) {
-  const PORT = Number.parseInt(process.env.PORT || '5000')
+// Register API routes
+registerRoutes(app);
 
-  app.listen(PORT, () => {
-    console.log(
-      `[pagelm] running on ${process.env.VITE_BACKEND_URL || `http://localhost:${PORT}`}`
-    )
-  })
-}
+
+// Render / production server
+const PORT = Number(process.env.PORT || 5000);
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`[pagelm] running on port ${PORT}`);
+});
+
+
+export default app;
