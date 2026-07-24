@@ -6,7 +6,7 @@ import { loggerMiddleware } from './middleware';
 const app = server();
 
 
-// Logger
+// Logger middleware
 app.use(loggerMiddleware);
 
 
@@ -31,7 +31,7 @@ app.use(cors({
 app.options('*', cors());
 
 
-// Static storage files
+// Static files
 app.use(
   app.serverStatic(
     "/storage",
@@ -44,10 +44,10 @@ app.use(
 registerRoutes(app);
 
 
-// Render / production server
+// Start server (Render)
 const PORT = Number(process.env.PORT || 5000);
 
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(PORT, () => {
   console.log(`[pagelm] running on port ${PORT}`);
 });
 
