@@ -15,7 +15,6 @@
     "noImplicitAny": false
   },
   "include": [
-    "index.ts",
     "src/**/*"
   ],
   "exclude": [
