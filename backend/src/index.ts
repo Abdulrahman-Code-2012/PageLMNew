@@ -1,2 +1,1 @@
-// backend/src/index.ts
-export { default } from './core';
+export { default } from './core/index';
