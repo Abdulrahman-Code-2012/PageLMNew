@@ -1,7 +1,7 @@
-import path from 'path';
-import fs from 'fs';
+import fs from 'fs'
+import path from 'path'
 
-const envPath = path.resolve(process.cwd(), '.env');
+const envPath = path.resolve(process.cwd(), '.env')
 
 if (fs.existsSync(envPath)) {
   process.loadEnvFile(envPath);
