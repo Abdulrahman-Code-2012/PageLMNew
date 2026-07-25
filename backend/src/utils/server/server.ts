@@ -87,52 +87,23 @@ if (req.method === "OPTIONS") {
                 return res;
             };
 
+res.json = (data: any) => {
+    res.setHeader("Content-Type", "application/json");
+    res.statusCode = res.statusCode || 200;
+    res.end(JSON.stringify(data));
+};
 
-            res.json = (data: any) => {
+res.send = (data: any) => {
+    if (data === undefined || data === null)
+        data = "";
 
-                res.writeHead(
-                    res.statusCode || 200,
-                    {
-                        "Content-Type":
-                            "application/json"
-                    }
-                );
+    if (typeof data === "object")
+        return res.json(data);
 
-                res.end(
-                    JSON.stringify(data)
-                );
-            };
-
-
-
-            res.send = (data: any) => {
-
-                if (
-                    data === undefined ||
-                    data === null
-                ) {
-                    data = "";
-                }
-
-
-                if (
-                    typeof data === "object"
-                ) {
-                    return res.json(data);
-                }
-
-
-                res.writeHead(
-                    res.statusCode || 200,
-                    {
-                        "Content-Type":
-                            "text/plain"
-                    }
-                );
-
-
-                res.end(String(data));
-            };
+    res.setHeader("Content-Type", "text/plain");
+    res.statusCode = res.statusCode || 200;
+    res.end(String(data));
+};
 
 
 
