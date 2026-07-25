@@ -17,100 +17,197 @@ function server() {
     const WARES: any[] = [];
     const WS_ROUTES: any[] = [];
 
+
     const wss = new WebSocketServer({
         noServer: true
     });
 
 
+
     const SERVER = http.createServer(
-        (req: any, res: any) => {
-            // CORS headers
-const origin = req.headers.origin;
-
-const allowedOrigins = [
-    "https://pagelmai.netlify.app",
-    "http://localhost:5173"
-];
-
-if (allowedOrigins.includes(origin)) {
-    res.setHeader(
-        "Access-Control-Allow-Origin",
-        origin
-    );
-}
-
-res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-);
-
-res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization"
-);
-
-res.setHeader(
-    "Access-Control-Allow-Credentials",
-    "true"
-);
+        (req:any, res:any)=>{
 
 
-// Preflight request
-if (req.method === "OPTIONS") {
-    res.statusCode = 204;
-    res.end();
-    return;
-}
+            // ============================
+            // CORS
+            // ============================
 
-            const u = parse(req.url || "", true);
+            const origin = req.headers.origin;
+
+
+            const allowedOrigins = [
+                "https://pagelmai.netlify.app",
+                "http://localhost:5173"
+            ];
+
+
+            if (
+                origin &&
+                allowedOrigins.includes(origin)
+            ){
+                res.setHeader(
+                    "Access-Control-Allow-Origin",
+                    origin
+                );
+            }
+
+
+            res.setHeader(
+                "Vary",
+                "Origin"
+            );
+
+
+            res.setHeader(
+                "Access-Control-Allow-Methods",
+                "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+            );
+
+
+            res.setHeader(
+                "Access-Control-Allow-Headers",
+                "Content-Type, Authorization"
+            );
+
+
+            res.setHeader(
+                "Access-Control-Allow-Credentials",
+                "true"
+            );
+
+
+
+            // OPTIONS preflight
+
+            if(req.method === "OPTIONS"){
+
+                res.statusCode = 204;
+                res.end();
+                return;
+
+            }
+
+
+
+
+            // ============================
+            // Request data
+            // ============================
+
+
+            const u = parse(
+                req.url || "",
+                true
+            );
+
 
             req.query = u.query || {};
             req.path = u.pathname || "/";
 
+
+
             req.hostname =
                 (req.headers.host || "")
                 .split(":")[0]
-                .replace(/[^\w.-]/g, "");
+                .replace(/[^\w.-]/g,"");
+
 
 
             req.ip =
                 (req.socket.remoteAddress || "")
-                .replace(/[^\w.:]/g, "");
+                .replace(/[^\w.:]/g,"");
+
+
 
 
 
             res.statusCode = 200;
 
 
-            res.status = (code: number) => {
+
+            res.status = (
+                code:number
+            )=>{
+
                 res.statusCode = code;
                 return res;
+
             };
 
-res.json = (data: any) => {
-    res.setHeader("Content-Type", "application/json");
-    res.statusCode = res.statusCode || 200;
-    res.end(JSON.stringify(data));
-};
 
-res.send = (data: any) => {
-    if (data === undefined || data === null)
-        data = "";
 
-    if (typeof data === "object")
-        return res.json(data);
 
-    res.setHeader("Content-Type", "text/plain");
-    res.statusCode = res.statusCode || 200;
-    res.end(String(data));
-};
+
+            res.json = (
+                data:any
+            )=>{
+
+
+                res.setHeader(
+                    "Content-Type",
+                    "application/json"
+                );
+
+
+                res.end(
+                    JSON.stringify(data)
+                );
+
+            };
+
+
+
+
+
+
+            res.send = (
+                data:any
+            )=>{
+
+
+                if(
+                    data === undefined ||
+                    data === null
+                ){
+
+                    data = "";
+
+                }
+
+
+
+                if(
+                    typeof data === "object"
+                ){
+
+                    return res.json(data);
+
+                }
+
+
+
+                res.setHeader(
+                    "Content-Type",
+                    "text/plain"
+                );
+
+
+                res.end(
+                    String(data)
+                );
+
+
+            };
+
+
+
 
 
 
             res.set = (
-                key: string,
-                value: string
-            ) => {
+                key:string,
+                value:string
+            )=>{
 
                 res.setHeader(
                     key,
@@ -118,7 +215,12 @@ res.send = (data: any) => {
                 );
 
                 return res;
+
             };
+
+
+
+
 
 
 
@@ -129,10 +231,14 @@ res.send = (data: any) => {
                 );
 
 
+
             req.params =
                 route
                 ? route.params
                 : {};
+
+
+
 
 
 
@@ -152,7 +258,7 @@ res.send = (data: any) => {
                     req:any,
                     res:any,
                     next:any
-                ) =>
+                )=>
                     route.handler(
                         req,
                         res,
@@ -163,27 +269,34 @@ res.send = (data: any) => {
                 :
 
                 (
-                    _req:any,
+                    req:any,
                     res:any
-                ) =>
-                    res
-                    .status(404)
-                    .end(
+                )=>{
+
+                    res.status(404)
+                    .send(
                         "404: Not Found"
-                    )
+                    );
+
+                }
+
             );
+
+
+
 
 
 
             let index = 0;
 
 
-            const next = () => {
 
-                if (
-                    index <
-                    handlers.length
-                ) {
+            const next = ()=>{
+
+
+                if(
+                    index < handlers.length
+                ){
 
                     handlers[index++](
                         req,
@@ -193,15 +306,28 @@ res.send = (data: any) => {
 
                 }
 
+
             };
 
 
+
             next();
+
+
 
         }
     );
 
 
+
+
+
+
+
+
+    // ============================
+    // WebSockets
+    // ============================
 
 
     SERVER.on(
@@ -210,7 +336,7 @@ res.send = (data: any) => {
             req:any,
             socket:any,
             head:any
-        ) => {
+        )=>{
 
 
             const u =
@@ -225,14 +351,14 @@ res.send = (data: any) => {
 
 
 
-            for (
+            for(
                 const route of WS_ROUTES
-            ) {
+            ){
 
 
-                if (
+                if(
                     route.path === urlPath
-                ) {
+                ){
 
 
                     wss.handleUpgrade(
@@ -241,12 +367,15 @@ res.send = (data: any) => {
                         head,
                         (ws:any)=>{
 
+
                             ws.req = req;
+
 
                             route.handler(
                                 ws,
                                 req
                             );
+
 
                         }
                     );
@@ -259,7 +388,9 @@ res.send = (data: any) => {
             }
 
 
+
             socket.destroy();
+
 
         }
     );
@@ -269,23 +400,32 @@ res.send = (data: any) => {
 
 
 
+
+
+
+
     function matchRoute(
         method:string,
         urlPath:string
-    ) {
+    ){
 
 
-        for (
+
+        for(
             const route of ROUTES
-        ) {
+        ){
 
 
-            if (
+
+            if(
                 route.method !== method &&
                 route.method !== "ALL"
-            ) {
+            ){
+
                 continue;
+
             }
+
 
 
 
@@ -303,12 +443,15 @@ res.send = (data: any) => {
 
 
 
-            if (
+            if(
                 routeParts.length !==
                 urlParts.length
-            ) {
+            ){
+
                 continue;
+
             }
+
 
 
 
@@ -318,54 +461,55 @@ res.send = (data: any) => {
 
 
 
-            for (
-                let i = 0;
-                i < routeParts.length;
+            for(
+                let i=0;
+                i<routeParts.length;
                 i++
-            ) {
+            ){
 
 
-                if (
+
+                if(
                     routeParts[i]
                     .startsWith(":")
-                ) {
+                ){
 
 
                     params[
-                        routeParts[i]
-                        .slice(1)
+                        routeParts[i].slice(1)
                     ] =
-                        decodeURIComponent(
-                            urlParts[i]
-                        );
+                    decodeURIComponent(
+                        urlParts[i]
+                    );
 
 
                 }
 
-                else if (
-                    routeParts[i] !==
-                    urlParts[i]
-                ) {
+                else if(
+                    routeParts[i] !== urlParts[i]
+                ){
 
 
                     matched = false;
                     break;
 
+
                 }
+
 
             }
 
 
 
-            if (matched) {
+            if(matched){
 
                 return {
-                    handler:
-                        route.handler,
+                    handler:route.handler,
                     params
                 };
 
             }
+
 
         }
 
@@ -373,7 +517,11 @@ res.send = (data: any) => {
 
         return null;
 
+
     }
+
+
+
 
 
 
@@ -384,7 +532,7 @@ res.send = (data: any) => {
         method:string,
         routePath:string,
         handler:any
-    ) {
+    ){
 
 
         ROUTES.push({
@@ -397,7 +545,9 @@ res.send = (data: any) => {
 
             handler
 
+
         });
+
 
     }
 
@@ -406,9 +556,11 @@ res.send = (data: any) => {
 
 
 
+
+
     function use(
         middleware:any
-    ) {
+    ){
 
         WARES.push(
             middleware
@@ -421,28 +573,21 @@ res.send = (data: any) => {
 
 
 
+
+
     function listen(
         port:number,
         host?:string | Function,
         callback?:Function
-    ) {
+    ){
 
 
-        SERVER.setTimeout(
-            10000
-        );
-
-
-
-        if (
+        if(
             typeof host === "function"
-        ) {
+        ){
 
-            callback =
-                host;
-
-            host =
-                "0.0.0.0";
+            callback = host;
+            host = "0.0.0.0";
 
         }
 
@@ -454,7 +599,11 @@ res.send = (data: any) => {
             callback as any
         );
 
+
     }
+
+
+
 
 
 
@@ -465,7 +614,7 @@ res.send = (data: any) => {
     function serverStatic(
         endpoint:string,
         dir:string
-    ) {
+    ){
 
 
         const absolute =
@@ -473,27 +622,17 @@ res.send = (data: any) => {
 
 
 
-        if (
-            !fs.existsSync(absolute) ||
-            !fs.statSync(absolute)
-            .isDirectory()
-        ) {
-
-
-            console.error(
-                `[STATIC] Directory not found: ${absolute}`
-            );
-
+        if(
+            !fs.existsSync(absolute)
+        ){
 
             return (
-                _req:any,
-                _res:any,
+                req:any,
+                res:any,
                 next:any
-            ) =>
-                next();
+            )=>next();
 
         }
-
 
 
 
@@ -511,14 +650,14 @@ res.send = (data: any) => {
             req:any,
             res:any,
             next:any
-        ) => {
+        )=>{
 
 
-
-            if (
-                req.method !== "GET" &&
+            if(
+                req.method !== "GET"
+                &&
                 req.method !== "HEAD"
-            ) {
+            ){
 
                 return next();
 
@@ -526,15 +665,13 @@ res.send = (data: any) => {
 
 
 
-            if (
+            if(
                 !req.path.startsWith(base)
-            ) {
+            ){
 
                 return next();
 
             }
-
-
 
 
 
@@ -557,10 +694,10 @@ res.send = (data: any) => {
                 )=>{
 
 
-                    if (
+                    if(
                         err ||
                         !stats.isFile()
-                    ) {
+                    ){
 
                         return next();
 
@@ -568,14 +705,15 @@ res.send = (data: any) => {
 
 
 
-                    fs.createReadStream(
-                        file
-                    )
+                    fs.createReadStream(file)
                     .pipe(res);
+
 
 
                 }
             );
+
+
 
         };
 
@@ -587,7 +725,9 @@ res.send = (data: any) => {
 
 
 
-    // JSON body parser
+
+
+    // JSON parser
 
     use(
         (
@@ -598,29 +738,25 @@ res.send = (data: any) => {
 
 
             const type =
-                req.headers[
-                    "content-type"
-                ];
+                req.headers["content-type"];
 
 
 
-            if (
+            if(
                 type &&
                 type.includes(
                     "application/json"
                 )
-            ) {
+            ){
 
 
-                let body = "";
+                let body="";
 
 
 
                 req.on(
                     "data",
-                    (
-                        chunk:any
-                    )=>{
+                    (chunk:any)=>{
 
                         body += chunk;
 
@@ -634,17 +770,15 @@ res.send = (data: any) => {
                     ()=>{
 
 
-                        try {
+                        try{
 
                             req.body =
                                 JSON.parse(body);
 
                         }
+                        catch{
 
-                        catch {
-
-                            req.body =
-                                null;
+                            req.body = null;
 
                         }
 
@@ -652,19 +786,27 @@ res.send = (data: any) => {
 
                         next();
 
+
                     }
                 );
 
-            }
 
-            else {
+            }
+            else{
+
 
                 next();
 
+
             }
+
+
 
         }
     );
+
+
+
 
 
 
@@ -681,117 +823,49 @@ res.send = (data: any) => {
         serverStatic,
 
 
-        routes:
-            ROUTES,
+        routes:ROUTES,
 
 
-        getRoutes:
-            () => ROUTES,
-
-
-
-        get:
-            (
-                p:string,
-                h:any
-            ) =>
-                add(
-                    "GET",
-                    p,
-                    h
-                ),
+        getRoutes:()=>ROUTES,
 
 
 
-        post:
-            (
-                p:string,
-                h:any
-            ) =>
-                add(
-                    "POST",
-                    p,
-                    h
-                ),
+        get:(p:string,h:any)=>
+            add("GET",p,h),
 
 
-
-        put:
-            (
-                p:string,
-                h:any
-            ) =>
-                add(
-                    "PUT",
-                    p,
-                    h
-                ),
+        post:(p:string,h:any)=>
+            add("POST",p,h),
 
 
-
-        patch:
-            (
-                p:string,
-                h:any
-            ) =>
-                add(
-                    "PATCH",
-                    p,
-                    h
-                ),
+        put:(p:string,h:any)=>
+            add("PUT",p,h),
 
 
-
-        delete:
-            (
-                p:string,
-                h:any
-            ) =>
-                add(
-                    "DELETE",
-                    p,
-                    h
-                ),
+        patch:(p:string,h:any)=>
+            add("PATCH",p,h),
 
 
-
-        options:
-            (
-                p:string,
-                h:any
-            ) =>
-                add(
-                    "OPTIONS",
-                    p,
-                    h
-                ),
+        delete:(p:string,h:any)=>
+            add("DELETE",p,h),
 
 
-
-        all:
-            (
-                p:string,
-                h:any
-            ) =>
-                add(
-                    "ALL",
-                    p,
-                    h
-                ),
+        options:(p:string,h:any)=>
+            add("OPTIONS",p,h),
 
 
+        all:(p:string,h:any)=>
+            add("ALL",p,h),
 
-        ws:
-            (
-                p:string,
-                h:any
-            ) =>
-                WS_ROUTES.push({
-                    path:p,
-                    handler:h
-                })
+
+        ws:(p:string,h:any)=>
+            WS_ROUTES.push({
+                path:p,
+                handler:h
+            })
 
     };
+
 
 }
 
