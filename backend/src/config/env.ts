@@ -34,8 +34,9 @@ export const config = {
     'gemini-1.5-pro',
 
   gemini_embed_model:
-    process.env.gemini_embed_model ||
-    'text-embedding-004',
+  process.env.GEMINI_EMBED_MODEL ||
+  process.env.gemini_embed_model ||
+  'models/gemini-embedding-001',
 
   // OpenAI
   openai:
