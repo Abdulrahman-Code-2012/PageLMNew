@@ -24,6 +24,43 @@ function server() {
 
     const SERVER = http.createServer(
         (req: any, res: any) => {
+            // CORS headers
+const origin = req.headers.origin;
+
+const allowedOrigins = [
+    "https://pagelmai.netlify.app",
+    "http://localhost:5173"
+];
+
+if (allowedOrigins.includes(origin)) {
+    res.setHeader(
+        "Access-Control-Allow-Origin",
+        origin
+    );
+}
+
+res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+);
+
+res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+);
+
+res.setHeader(
+    "Access-Control-Allow-Credentials",
+    "true"
+);
+
+
+// Preflight request
+if (req.method === "OPTIONS") {
+    res.statusCode = 204;
+    res.end();
+    return;
+}
 
             const u = parse(req.url || "", true);
 
