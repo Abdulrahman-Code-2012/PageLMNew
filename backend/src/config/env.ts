@@ -15,7 +15,7 @@ export const config = {
 
   // AI Provider
   provider: process.env.LLM_PROVIDER || 'openrouter',
-  embeddings_provider: process.env.EMB_PROVIDER || 'openai',
+  embeddings_provider: process.env.EMB_PROVIDER || 'gemini',
 
   // OpenRouter
   openrouter: process.env.OPENROUTER_API_KEY || '',
