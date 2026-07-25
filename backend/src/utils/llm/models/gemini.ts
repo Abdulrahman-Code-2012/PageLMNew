@@ -14,9 +14,13 @@ export const makeLLM: MkLLM = (cfg: any) => {
   return wrapChat(m)
 }
 
+
 export const makeEmbeddings: MkEmb = (cfg: any): EmbeddingsLike => {
   return new GoogleGenerativeAIEmbeddings({
     model: cfg.gemini_embed_model || 'text-embedding-004',
-    apiKey: cfg.gemini || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY,
+    apiKey:
+      cfg.gemini ||
+      process.env.GOOGLE_API_KEY ||
+      process.env.GEMINI_API_KEY,
   })
 }
