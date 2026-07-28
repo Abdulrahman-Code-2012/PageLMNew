@@ -1,601 +1,1568 @@
 import { env } from "../config/env";
 
-export type ChatStartResponse = { ok: true; chatId: string; stream: string };
-export type ChatMessage = { role: "user" | "assistant"; content: string; at: number };
-export type ChatInfo = { id: string; title?: string; createdAt?: number };
-export type ChatsList = { ok: true; chats: ChatInfo[] };
-export type ChatDetail = { ok: true; chat: ChatInfo; messages: ChatMessage[] };
-export type ChatJSONBody = { q: string; chatId?: string };
-export type ChatPhase = "upload_start" | "upload_done" | "generating";
-export type FlashCard = { q: string; a: string; tags?: string[] };
-export type Question = { id: number; question: string; options: string[]; correct: number; hint: string; explanation: string; imageHtml?: string; };
-export type QuizStartResponse = { ok: true; quizId: string; stream: string }
-export type QuizEvent = { type: "ready" | "phase" | "quiz" | "done" | "error" | "ping"; quizId?: string; value?: string; quiz?: unknown; error?: string; t?: number }
-export type SmartNotesStart = { ok: true; noteId: string; stream: string }
-export type CompanionHistoryEntry = { role: "user" | "assistant"; content: string }
-export type CompanionAnswer = { topic: string; answer: string; flashcards: FlashCard[] }
-export type CompanionAskResponse = { ok: boolean; companion: CompanionAnswer }
-export type SavedFlashcard = {
+/* =========================
+   TYPES
+========================= */
+
+export type ChatStartResponse = {
+  ok: true;
+  chatId: string;
+  stream: string;
+};
+
+export type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+  at: number;
+};
+
+export type ChatInfo = {
   id: string;
-  question: string;
-  answer: string;
-  tag: string;
-  created: number;
-};
-export type ExamEvent =
-  | { type: "ready"; runId: string }
-  | { type: "phase"; value: string; examId?: string }
-  | { type: "exam"; examId: string; payload: Question[] }
-  | { type: "done" }
-  | { type: "error"; examId?: string; error: string };
-export type PodcastEvent =
-  | { type: "ready"; pid: string }
-  | { type: "phase"; value: string }
-  | { type: "file"; filename: string; mime: string }
-  | { type: "warn"; message: string }
-  | { type: "script"; data: any }
-  | { type: "audio"; file: string; filename?: string; staticUrl?: string }
-  | { type: "done" }
-  | { type: "error"; error: string }
-export type SmartNotesEvent =
-  | { type: "ready"; noteId: string }
-  | { type: "phase"; value: string }
-  | { type: "file"; file: string }
-  | { type: "done" }
-  | { type: "error"; error: string }
-  | { type: "ping"; t: number }
-export type StudyMaterials = {
-  summary: string;
-  keyPoints: string[];
-  topics: string[];
-  categories: string[];
-  searchableKeywords: string[];
-  studyGuide: {
-    mainConcepts: string[];
-    importantTerms: { term: string; definition: string; }[];
-    questions: string[];
-    takeaways: string[];
-  };
-  timestamps?: { time: number; content: string; topic: string; }[];
+  title?: string;
+  createdAt?: number;
 };
 
-export type TranscriptionResponse = {
-  ok: boolean;
-  transcription?: string;
-  provider?: string;
-  confidence?: number;
-  error?: string;
-  studyMaterials?: StudyMaterials;
-}
+export type ChatsList = {
+  ok: true;
+  chats: ChatInfo[];
+};
+
+export type ChatDetail = {
+  ok: true;
+  chat: ChatInfo;
+  messages: ChatMessage[];
+};
+
+export type ChatJSONBody = {
+  q: string;
+  chatId?: string;
+};
+
+export type ChatPhase =
+  | "upload_start"
+  | "upload_done"
+  | "generating";
+
+export type FlashCard = {
+  q: string;
+  a: string;
+  tags?: string[];
+};
+
+export type AnswerPayload =
+  | string
+  | {
+      answer: string;
+      flashcards?: FlashCard[];
+    };
+
 export type ChatEvent =
-  | { type: "ready"; chatId: string }
-  | { type: "phase"; value: ChatPhase }
-  | { type: "file"; filename: string; mime: string }
-  | { type: "answer"; answer: AnswerPayload }
-  | { type: "done" }
-  | { type: "error"; error: string };
+  | {
+      type: "ready";
+      chatId: string;
+    }
+  | {
+      type: "phase";
+      value: ChatPhase;
+    }
+  | {
+      type: "file";
+      filename: string;
+      mime: string;
+    }
+  | {
+      type: "answer";
+      answer: AnswerPayload;
+    }
+  | {
+      type: "done";
+    }
+  | {
+      type: "error";
+      error: string;
+    };
 
-type O<T> = Promise<T>;
-type AnswerPayload = string | { answer: string; flashcards?: FlashCard[] };
 
-const timeoutCtl = (ms: number) => {
-  const c = new AbortController();
-  const t = setTimeout(() => c.abort(), ms);
-  return { signal: c.signal, done: () => clearTimeout(t) };
+/* =========================
+   HELPERS
+========================= */
+
+type PromiseType<T> = Promise<T>;
+
+const timeoutCtl = (ms:number)=>{
+  const controller = new AbortController();
+
+  const timer = setTimeout(
+    ()=>controller.abort(),
+    ms
+  );
+
+  return {
+    signal: controller.signal,
+    done:()=>{
+      clearTimeout(timer);
+    }
+  };
 };
+
 
 async function req<T = unknown>(
-  url: string,
-  init: RequestInit & { timeout?: number } = {}
-): O<T> {
-  const { timeout = env.timeout, ...rest } = init;
-  const { signal, done } = timeoutCtl(timeout);
-  try {
-    const r = await fetch(url, { signal, ...rest });
-    if (!r.ok) {
-      const txt = await r.text().catch(() => "");
-      throw new Error(`http ${r.status}: ${txt || r.statusText}`);
+  url:string,
+  init:RequestInit & {
+    timeout?:number
+  } = {}
+):PromiseType<T>{
+
+  const {
+    timeout = env.timeout,
+    ...rest
+  } = init;
+
+
+  const {
+    signal,
+    done
+  } = timeoutCtl(timeout);
+
+
+  try{
+
+    const response = await fetch(
+      url,
+      {
+        signal,
+        ...rest
+      }
+    );
+
+
+    if(!response.ok){
+
+      const text =
+        await response
+        .text()
+        .catch(()=>"")
+
+
+      throw new Error(
+        `HTTP ${response.status}: ${
+          text || response.statusText
+        }`
+      );
     }
-    const ct = r.headers.get("content-type") || "";
-    if (ct.includes("application/json")) return (await r.json()) as T;
-    return (await r.text()) as unknown as T;
-  } finally {
+
+
+    const contentType =
+      response.headers
+      .get("content-type") || "";
+
+
+    if(
+      contentType.includes(
+        "application/json"
+      )
+    ){
+      return await response.json() as T;
+    }
+
+
+    return await response.text() as unknown as T;
+
+
+  }finally{
+
     done();
+
   }
 }
 
-const jsonHeaders = (_?: unknown) => {
-  const h = new Headers();
-  h.set("content-type", "application/json");
-  return h;
+
+const jsonHeaders = ()=>{
+
+  const headers = new Headers();
+
+  headers.set(
+    "content-type",
+    "application/json"
+  );
+
+  return headers;
+
 };
 
-function wsURL(path: string) {
-  const u = new URL(env.backend);
-  const proto = u.protocol === "https:" ? "wss:" : "ws:";
-  return `${proto}//${u.host}${path}`;
+
+
+function wsURL(path:string){
+
+  const url =
+    new URL(env.backend);
+
+
+  const protocol =
+    url.protocol === "https:"
+      ? "wss:"
+      : "ws:";
+
+
+  return `${protocol}//${url.host}${path}`;
+
 }
 
-export async function chatJSON(body: ChatJSONBody) {
-  return req<ChatStartResponse>(`${env.backend}/chat`, {
-    method: "POST",
-    headers: jsonHeaders({}),
-    body: JSON.stringify(body),
-  });
+
+/* =========================
+   CHAT
+========================= */
+
+
+export async function chatJSON(
+  body:ChatJSONBody
+){
+
+  return req<ChatStartResponse>(
+    `${env.backend}/chat`,
+    {
+      method:"POST",
+      headers:jsonHeaders(),
+      body:JSON.stringify(body)
+    }
+  );
+
 }
 
-export async function chatMultipart(q: string, files: File[], chatId?: string) {
-  const f = new FormData();
-  f.append("q", q);
-  if (chatId) f.append("chatId", chatId);
-  for (const file of files) f.append("file", file, file.name);
-  return req<ChatStartResponse>(`${env.backend}/chat`, {
-    method: "POST",
-    body: f,
-    timeout: Math.max(env.timeout, 300000),
-  });
-}
 
-export function connectChatStream(chatId: string, onEvent: (ev: ChatEvent) => void) {
-  const url = wsURL(`/ws/chat?chatId=${encodeURIComponent(chatId)}`);
-  const ws = new WebSocket(url);
-  ws.onmessage = (m) => {
-    try {
-      const data = JSON.parse(m.data as string) as ChatEvent;
-      onEvent(data);
-    } catch { }
-  };
-  ws.onerror = () => {
-    onEvent({ type: "error", error: "stream_error" });
-  };
-  return { ws, close: () => { try { ws.close(); } catch { } } };
-}
 
-export async function chatAskOnce(opts: {
-  q: string;
-  files?: File[];
-  chatId?: string;
-  onEvent?: (ev: ChatEvent) => void;
-}) {
-  const { q, files = [], chatId, onEvent } = opts;
-  const start = files.length ? await chatMultipart(q, files, chatId) : await chatJSON({ q, chatId });
-  let answer = "";
-  let flashcards: FlashCard[] | undefined;
+export async function chatMultipart(
+  q:string,
+  files:File[],
+  chatId?:string
+){
 
-  await new Promise<void>((resolve, reject) => {
-    const { close } = connectChatStream(start.chatId, (ev) => {
-      onEvent?.(ev);
-      if (ev.type === "answer") {
-        const p = ev.answer;
-        if (typeof p === "string") {
-          answer = p;
-        } else if (p && typeof p === "object") {
-          answer = p.answer ?? "";
-          if (Array.isArray(p.flashcards)) flashcards = p.flashcards;
-        }
-      }
-      if (ev.type === "done") { close(); resolve(); }
-      if (ev.type === "error") { close(); reject(new Error(ev.error || "chat failed")); }
-    });
-  });
+  const form =
+    new FormData();
 
-  return { chatId: start.chatId, answer, flashcards };
-}
 
-export async function companionAsk(input: {
-  question: string;
-  filePath?: string;
-  documentText?: string;
-  documentTitle?: string;
-  topic?: string;
-  history?: CompanionHistoryEntry[];
-}) {
-  const question = (input.question || "").trim();
-  if (!question) throw new Error("Question is required");
+  form.append(
+    "q",
+    q
+  );
 
-  const payload: Record<string, unknown> = { question };
-  if (input.filePath) payload.filePath = input.filePath;
-  if (input.documentText) payload.documentText = input.documentText;
-  if (input.documentTitle) payload.documentTitle = input.documentTitle;
-  if (input.topic) payload.topic = input.topic;
-  if (input.history && input.history.length) {
-    payload.history = input.history.map((h) => ({ role: h.role, content: h.content }));
+
+  if(chatId){
+
+    form.append(
+      "chatId",
+      chatId
+    );
+
   }
 
-  return req<CompanionAskResponse>(`${env.backend}/api/companion/ask`, {
-    method: "POST",
-    headers: jsonHeaders({}),
-    body: JSON.stringify(payload),
-    timeout: Math.max(env.timeout, 120000),
-  });
+
+  for(const file of files){
+
+    form.append(
+      "file",
+      file,
+      file.name
+    );
+
+  }
+
+
+  return req<ChatStartResponse>(
+    `${env.backend}/chat`,
+    {
+      method:"POST",
+      body:form,
+      timeout:300000
+    }
+  );
+
 }
 
-export function getChats() {
-  return req<ChatsList>(`${env.backend}/chats`, { method: "GET" });
+
+
+export function connectChatStream(
+  chatId:string,
+  onEvent:(event:ChatEvent)=>void
+){
+
+  const url =
+    wsURL(
+      `/ws/chat?chatId=${encodeURIComponent(chatId)}`
+    );
+
+
+  const ws =
+    new WebSocket(url);
+
+
+
+  ws.onmessage = (message)=>{
+
+    try{
+
+      const data =
+        JSON.parse(
+          message.data as string
+        ) as ChatEvent;
+
+
+      onEvent(data);
+
+
+    }catch{
+
+    }
+
+  };
+
+
+  ws.onerror = ()=>{
+
+    onEvent({
+      type:"error",
+      error:"stream_error"
+    });
+
+  };
+
+
+  return {
+
+    ws,
+
+    close(){
+
+      try{
+        ws.close();
+      }catch{}
+
+    }
+
+  };
+
 }
 
-export function getChatDetail(id: string) {
-  return req<ChatDetail>(`${env.backend}/chats/${encodeURIComponent(id)}`, { method: "GET" });
+
+
+export async function chatAskOnce(
+  opts:{
+    q:string;
+    files?:File[];
+    chatId?:string;
+    onEvent?:
+      (event:ChatEvent)=>void;
+  }
+){
+
+  const {
+    q,
+    files=[],
+    chatId,
+    onEvent
+  } = opts;
+
+
+  const start =
+    files.length
+      ? await chatMultipart(
+          q,
+          files,
+          chatId
+        )
+      : await chatJSON({
+          q,
+          chatId
+        });
+
+
+  let answer = "";
+
+
+  let flashcards:
+    FlashCard[] | undefined;
+
+
+
+  await new Promise<void>(
+    (resolve,reject)=>{
+
+
+      const stream =
+        connectChatStream(
+          start.chatId,
+          event=>{
+
+
+            onEvent?.(event);
+
+
+
+            if(
+              event.type==="answer"
+            ){
+
+              if(
+                typeof event.answer==="string"
+              ){
+
+                answer =
+                  event.answer;
+
+              }else{
+
+                answer =
+                  event.answer.answer || "";
+
+
+                flashcards =
+                  event.answer.flashcards;
+
+              }
+
+            }
+
+
+
+            if(
+              event.type==="done"
+            ){
+
+              stream.close();
+
+              resolve();
+
+            }
+
+
+
+            if(
+              event.type==="error"
+            ){
+
+              stream.close();
+
+              reject(
+                new Error(
+                  event.error
+                )
+              );
+
+            }
+
+
+          }
+        );
+
+
+    }
+  );
+
+
+
+  return {
+    chatId:start.chatId,
+    answer,
+    flashcards
+  };
+
+}
+ 
+/* =========================
+   COMPANION
+========================= */
+
+export type CompanionHistoryEntry = {
+  role:"user" | "assistant";
+  content:string;
+};
+
+
+export type CompanionAnswer = {
+  topic:string;
+  answer:string;
+  flashcards:FlashCard[];
+};
+
+
+export type CompanionAskResponse = {
+  ok:boolean;
+  companion:CompanionAnswer;
+};
+
+
+
+export async function companionAsk(
+  input:{
+    question:string;
+    filePath?:string;
+    documentText?:string;
+    documentTitle?:string;
+    topic?:string;
+    history?:CompanionHistoryEntry[];
+  }
+){
+
+  const payload:any = {
+    question:
+      input.question.trim()
+  };
+
+
+  if(input.filePath)
+    payload.filePath=input.filePath;
+
+
+  if(input.documentText)
+    payload.documentText=input.documentText;
+
+
+  if(input.documentTitle)
+    payload.documentTitle=input.documentTitle;
+
+
+  if(input.topic)
+    payload.topic=input.topic;
+
+
+  if(input.history)
+    payload.history=input.history;
+
+
+
+  return req<CompanionAskResponse>(
+    `${env.backend}/api/companion/ask`,
+    {
+      method:"POST",
+      headers:jsonHeaders(),
+      body:JSON.stringify(payload),
+      timeout:120000
+    }
+  );
+
 }
 
-export async function createFlashcard(input: {
-  question: string;
-  answer: string;
-  tag: string;
-}) {
-  return req<{ ok: true; flashcard: SavedFlashcard }>(`${env.backend}/flashcards`, {
-    method: "POST",
-    headers: jsonHeaders({}),
-    body: JSON.stringify(input),
-  });
+
+
+/* =========================
+   CHATS
+========================= */
+
+
+export function getChats(){
+
+  return req<ChatsList>(
+    `${env.backend}/chats`,
+    {
+      method:"GET"
+    }
+  );
+
 }
 
-export async function listFlashcards() {
-  return req<{ ok: true; flashcards: SavedFlashcard[] }>(`${env.backend}/flashcards`, {
-    method: "GET",
-  });
+
+
+export function getChatDetail(
+  id:string
+){
+
+  return req<ChatDetail>(
+    `${env.backend}/chats/${encodeURIComponent(id)}`,
+    {
+      method:"GET"
+    }
+  );
+
 }
 
-export async function deleteFlashcard(id: string) {
-  return req<{ ok: true }>(`${env.backend}/flashcards/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  });
+
+
+/* =========================
+   FLASHCARDS
+========================= */
+
+
+export type SavedFlashcard = {
+
+  id:string;
+
+  question:string;
+
+  answer:string;
+
+  tag:string;
+
+  created:number;
+
+};
+
+
+
+export async function createFlashcard(
+  input:{
+    question:string;
+    answer:string;
+    tag:string;
+  }
+){
+
+  return req<{
+    ok:true;
+    flashcard:SavedFlashcard;
+  }>(
+    `${env.backend}/flashcards`,
+    {
+      method:"POST",
+      headers:jsonHeaders(),
+      body:JSON.stringify(input)
+    }
+  );
+
 }
 
-export async function getExams() {
-  return req<{ ok: true; exams: { id: string; name: string; sections: any[] }[] }>(
+
+
+export function listFlashcards(){
+
+  return req<{
+    ok:true;
+    flashcards:SavedFlashcard[];
+  }>(
+    `${env.backend}/flashcards`,
+    {
+      method:"GET"
+    }
+  );
+
+}
+
+
+
+export function deleteFlashcard(
+  id:string
+){
+
+  return req<{
+    ok:true;
+  }>(
+    `${env.backend}/flashcards/${encodeURIComponent(id)}`,
+    {
+      method:"DELETE"
+    }
+  );
+
+}
+
+
+
+/* =========================
+   EXAMS
+========================= */
+
+
+export type Question = {
+
+  id:number;
+
+  question:string;
+
+  options:string[];
+
+  correct:number;
+
+  hint:string;
+
+  explanation:string;
+
+  imageHtml?:string;
+
+};
+
+
+
+export type ExamEvent =
+
+ | {
+    type:"ready";
+    runId:string;
+   }
+
+ | {
+    type:"phase";
+    value:string;
+    examId?:string;
+   }
+
+ | {
+    type:"exam";
+    examId:string;
+    payload:Question[];
+   }
+
+ | {
+    type:"done";
+   }
+
+ | {
+    type:"error";
+    error:string;
+   };
+
+
+
+
+export async function getExams(){
+
+  return req<{
+    ok:true;
+    exams:any[];
+  }>(
     `${env.backend}/exams`,
-    { method: "GET" }
-  )
+    {
+      method:"GET"
+    }
+  );
+
 }
 
-export async function startExam(examId: string) {
-  return req<{ ok: true; runId: string; stream: string }>(
+
+
+export async function startExam(
+  examId:string
+){
+
+ return req<{
+    ok:true;
+    runId:string;
+    stream:string;
+ }>(
     `${env.backend}/exam`,
     {
-      method: "POST",
-      headers: jsonHeaders({}),
-      body: JSON.stringify({ examId }),
+      method:"POST",
+      headers:jsonHeaders(),
+      body:JSON.stringify({
+        examId
+      })
     }
+ );
+
+}
+
+
+
+export function connectExamStream(
+ runId:string,
+ onEvent:(event:ExamEvent)=>void
+){
+
+ const ws =
+   new WebSocket(
+     wsURL(
+       `/ws/exams?runId=${encodeURIComponent(runId)}`
+     )
+   );
+
+
+ ws.onmessage=(m)=>{
+
+  try{
+
+   onEvent(
+    JSON.parse(
+      m.data as string
+    )
+   );
+
+  }catch{}
+
+ };
+
+
+ ws.onerror=()=>{
+
+  onEvent({
+    type:"error",
+    error:"stream_error"
+  });
+
+ };
+
+
+ return {
+
+  ws,
+
+  close(){
+
+   try{
+    ws.close();
+   }catch{}
+
+  }
+
+ };
+
+}
+
+
+
+/* =========================
+   SMART NOTES
+========================= */
+
+
+export type SmartNotesEvent =
+
+ | {
+    type:"ready";
+    noteId:string;
+   }
+
+ | {
+    type:"phase";
+    value:string;
+   }
+
+ | {
+    type:"file";
+    file:string;
+   }
+
+ | {
+    type:"done";
+   }
+
+ | {
+    type:"error";
+    error:string;
+   };
+
+
+
+export function smartnotesStart(
+ input:{
+  topic?:string;
+  notes?:string;
+  filePath?:string;
+ }
+){
+
+ return req(
+   `${env.backend}/smartnotes`,
+   {
+    method:"POST",
+    headers:jsonHeaders(),
+    body:JSON.stringify(input)
+   }
+ );
+
+}
+
+
+
+export function connectSmartnotesStream(
+ noteId:string,
+ onEvent:(event:SmartNotesEvent)=>void
+){
+
+ const ws =
+ new WebSocket(
+   wsURL(
+    `/ws/smartnotes?noteId=${encodeURIComponent(noteId)}`
+   )
+ );
+
+
+ ws.onmessage=(m)=>{
+
+  try{
+
+   onEvent(
+    JSON.parse(
+     m.data as string
+    )
+   );
+
+  }catch{}
+
+ };
+
+
+ return {
+
+  ws,
+
+  close(){
+
+   try{
+    ws.close();
+   }catch{}
+
+  }
+
+ };
+
+}
+
+
+
+/* =========================
+   PODCAST
+========================= */
+
+
+export function podcastStart(
+ payload:{
+  topic:string
+ }
+){
+
+ return req(
+  `${env.backend}/podcast`,
+  {
+   method:"POST",
+   headers:jsonHeaders(),
+   body:JSON.stringify(payload)
+  }
+ );
+
+}
+
+
+
+export function connectPodcastStream(
+ pid:string,
+ onEvent:(event:any)=>void
+){
+
+ const ws =
+ new WebSocket(
+  wsURL(
+   `/ws/podcast?pid=${encodeURIComponent(pid)}`
   )
-}
+ );
 
-export function connectExamStream(runId: string, onEvent: (ev: ExamEvent) => void) {
-  const url = wsURL(`/ws/exams?runId=${encodeURIComponent(runId)}`)
-  const ws = new WebSocket(url)
-  ws.onmessage = (m) => {
-    try {
-      onEvent(JSON.parse(m.data as string) as ExamEvent)
-    } catch { }
-  }
-  ws.onerror = () => onEvent({ type: "error", error: "stream_error" })
-  return { ws, close: () => { try { ws.close() } catch { } } }
-}
 
-export async function smartnotesStart(input: { topic?: string; notes?: string; filePath?: string }) {
-  return req<SmartNotesStart>(`${env.backend}/smartnotes`, {
-    method: "POST",
-    headers: jsonHeaders(),
-    body: JSON.stringify(input),
+ ws.onmessage=(e)=>{
+
+  try{
+
+   onEvent(
+    JSON.parse(e.data)
+   );
+
+  }catch{}
+
+ };
+
+
+ ws.onerror=()=>{
+
+  onEvent({
+   type:"error",
+   error:"stream_error"
   });
-}
 
-export function connectSmartnotesStream(noteId: string, onEvent: (ev: SmartNotesEvent) => void) {
-  const url = wsURL(`/ws/smartnotes?noteId=${encodeURIComponent(noteId)}`);
-  const ws = new WebSocket(url);
-  ws.onmessage = (m) => {
-    try {
-      onEvent(JSON.parse(m.data as string) as SmartNotesEvent);
-    } catch { }
-  };
-  ws.onerror = () => onEvent({ type: "error", error: "stream_error" });
-  return { ws, close: () => { try { ws.close(); } catch { } } };
-}
+ };
 
-export function flashcards(topic: string) {
-  return req<{ cards: unknown[] }>(`${env.backend}/flashcards`, {
-    method: "POST",
-    headers: jsonHeaders(),
-    body: JSON.stringify({ topic }),
-  });
-}
 
-export async function quizStart(topic: string) {
-  return req<QuizStartResponse>(`${env.backend}/quiz`, {
-    method: "POST",
-    headers: jsonHeaders({}),
-    body: JSON.stringify({ topic })
-  }
-  )
-}
+ return {
 
-export async function podcastStart(payload: { topic: string }) {
-  const url = `${env.backend}/podcast`
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || "Failed to start podcast")
-  return data
-}
+  ws,
 
-export function connectPodcastStream(pid: string, onEvent: (ev: any) => void) {
-  const wsUrl = `${env.backend.replace(/^http/, "ws")}/ws/podcast?pid=${pid}`
-  const ws = new WebSocket(wsUrl)
+  close(){
 
-  ws.onopen = () => {
+   try{
+    ws.close();
+   }catch{}
+
   }
 
-  ws.onmessage = (e) => {
-    try {
-      const msg = JSON.parse(e.data)
-      onEvent(msg)
-    } catch (err) {
-      onEvent({ type: "error", error: "invalid_message" })
-    }
-  }
+ };
 
-  ws.onclose = (e) => {
-  }
-
-  ws.onerror = () => onEvent({ type: "error", error: "stream_error" } as any)
-  return { ws, close: () => { try { ws.close() } catch { } } }
 }
 
-export function connectQuizStream(quizId: string, onEvent: (ev: QuizEvent) => void) {
-  const url = wsURL(`/ws/quiz?quizId=${encodeURIComponent(quizId)}`);
-  const ws = new WebSocket(url); ws.onmessage = m => {
-    try {
-      onEvent(JSON.parse(m.data as string) as QuizEvent)
-    } catch { }
-  }; ws.onerror = () => onEvent({ type: "error", error: "stream_error" } as any); return { ws, close: () => { try { ws.close() } catch { } } }
-}
 
-export async function transcribeAudio(file: File) {
-  const formData = new FormData();
-  formData.append('file', file);
 
-  return req<TranscriptionResponse>(`${env.backend}/transcriber`, {
-    method: 'POST',
-    body: formData,
-    timeout: Math.max(env.timeout, 180000),
-  });
-}
+/* =========================
+   TRANSCRIBER
+========================= */
 
-export type PlannerTask = {
-  id: string;
-  course?: string;
-  title: string;
-  type?: string;
-  notes?: string;
-  dueAt: number;
-  estMins: number;
-  priority: 1 | 2 | 3 | 4 | 5;
-  status: "todo" | "doing" | "done" | "blocked";
-  createdAt: number;
-  updatedAt: number;
-  tags?: string[];
-  files?: { id: string; filename: string; originalName: string; mimeType: string; size: number; uploadedAt: number }[];
-  steps?: string[];
+
+export type TranscriptionResponse = {
+
+ ok:boolean;
+
+ transcription?:string;
+
+ provider?:string;
+
+ confidence?:number;
+
+ error?:string;
+
+ studyMaterials?:unknown;
+
 };
 
-export type PlannerSlot = { id: string; taskId: string; start: number; end: number; kind: "focus" | "review" | "buffer"; done?: boolean }
-export type WeeklyPlan = { days: { date: string; slots: PlannerSlot[] }[] }
 
-export type PlannerEvent =
-  | { type: "ready"; sid: string }
-  | { type: "phase"; value: string }
-  | { type: "plan.update"; taskId: string; slots: PlannerSlot[] }
-  | { type: "materials.chunk"; id: string; idx: number; total: number; more: boolean; encoding: string; data: string }
-  | { type: "materials.done"; id: string; total: number }
-  | { type: "reminder"; text: string; at: number; taskId?: string; scheduledFor?: string }
-  | { type: "daily.digest"; date: string; due: { id: string; title: string; dueAt: number }[]; sessions: number; message: string }
-  | { type: "evening.review"; date: string; stats: any; tomorrowTasks: { id: string; title: string }[]; message: string }
-  | { type: "break.reminder"; text: string; at: string }
-  | { type: "task.created"; task: PlannerTask }
-  | { type: "task.updated"; task: PlannerTask }
-  | { type: "task.deleted"; taskId: string }
-  | { type: "task.files.added"; taskId: string; files: any[] }
-  | { type: "task.file.removed"; taskId: string; fileId: string }
-  | { type: "session.started"; session: { id: string; taskId: string; slotId?: string; startedAt: string; status: string } }
-  | { type: "session.ended"; session: { id: string; endedAt: string; minutesWorked: number; completed: boolean; status: string } }
-  | { type: "weekly.update"; plan: WeeklyPlan }
-  | { type: "slot.update"; taskId: string; slotId: string; done: boolean; skip: boolean }
-  | { type: "done" };
 
-export async function plannerIngest(text: string) {
-  return req<{ ok: boolean; task: PlannerTask }>(`${env.backend}/tasks/ingest`, {
-    method: "POST",
-    headers: jsonHeaders({}),
-    body: JSON.stringify({ text })
-  })
-}
+export function transcribeAudio(
+ file:File
+){
 
-export async function plannerList(params?: { status?: string; dueBefore?: number; course?: string }) {
-  const q = new URLSearchParams()
-  if (params?.status) q.set("status", params.status)
-  if (params?.dueBefore) q.set("dueBefore", String(params.dueBefore))
-  if (params?.course) q.set("course", params.course)
-  const url = `${env.backend}/tasks${q.toString() ? `?${q}` : ""}`
-  return req<{ ok: boolean; tasks: PlannerTask[] }>(url, { method: "GET" })
-}
+ const form =
+ new FormData();
 
-export async function plannerPlan(id: string, cram?: boolean) {
-  return req<{ ok: boolean; task: PlannerTask & { plan?: { slots: PlannerSlot[] } } }>(`${env.backend}/tasks/${encodeURIComponent(id)}/plan`, {
-    method: "POST",
-    headers: jsonHeaders({}),
-    body: JSON.stringify({ cram: !!cram })
-  })
-}
 
-export async function plannerWeekly(cram?: boolean) {
-  return req<{ ok: boolean; plan: WeeklyPlan }>(`${env.backend}/planner/weekly`, {
-    method: "POST",
-    headers: jsonHeaders({}),
-    body: JSON.stringify({ cram: !!cram })
-  })
-}
+ form.append(
+  "file",
+  file
+ );
 
-export async function plannerMaterials(id: string, kind: "summary" | "studyGuide" | "flashcards" | "quiz") {
-  return req<{ ok: boolean; data: any }>(`${env.backend}/tasks/${encodeURIComponent(id)}/materials`, {
-    method: "POST",
-    headers: jsonHeaders({}),
-    body: JSON.stringify({ kind })
-  })
-}
 
-export function connectPlannerStream(sid: string, onEvent: (ev: PlannerEvent) => void) {
-  const url = wsURL(`/ws/planner?sid=${encodeURIComponent(sid)}`)
-  const ws = new WebSocket(url)
-  ws.onmessage = (m) => {
-    try {
-      const ev = JSON.parse(m.data as string)
-      onEvent(ev)
-    } catch { }
+ return req<TranscriptionResponse>(
+  `${env.backend}/transcriber`,
+  {
+   method:"POST",
+   body:form,
+   timeout:180000
   }
-  ws.onerror = () => { /* ignore for now */ }
-  return { ws, close: () => { try { ws.close() } catch { } } }
+ );
+
+}
+ 
+/* =========================
+   PLANNER
+========================= */
+
+
+export type PlannerTask = {
+
+ id:string;
+
+ course?:string;
+
+ title:string;
+
+ type?:string;
+
+ notes?:string;
+
+ dueAt:number;
+
+ estMins:number;
+
+ priority:1|2|3|4|5;
+
+ status:
+  |"todo"
+  |"doing"
+  |"done"
+  |"blocked";
+
+ createdAt:number;
+
+ updatedAt:number;
+
+ tags?:string[];
+
+ files?:any[];
+
+ steps?:string[];
+
+};
+
+
+
+export type PlannerSlot = {
+
+ id:string;
+
+ taskId:string;
+
+ start:number;
+
+ end:number;
+
+ kind:
+  |"focus"
+  |"review"
+  |"buffer";
+
+ done?:boolean;
+
+};
+
+
+
+export type WeeklyPlan = {
+
+ days:{
+  date:string;
+  slots:PlannerSlot[];
+ }[];
+
+};
+
+
+
+export type PlannerEvent = any;
+
+
+
+export function plannerIngest(
+ text:string
+){
+
+ return req(
+  `${env.backend}/tasks/ingest`,
+  {
+   method:"POST",
+   headers:jsonHeaders(),
+   body:JSON.stringify({
+    text
+   })
+  }
+ );
+
 }
 
-export async function plannerUpdate(id: string, patch: Partial<PlannerTask>) {
-  return req<{ ok: boolean; task: PlannerTask }>(`${env.backend}/tasks/${encodeURIComponent(id)}`, {
-    method: "PATCH",
-    headers: jsonHeaders({}),
-    body: JSON.stringify(patch)
-  })
+
+
+export function plannerList(
+ params?:{
+  status?:string;
+  dueBefore?:number;
+  course?:string;
+ }
+){
+
+ const q =
+ new URLSearchParams();
+
+
+ if(params?.status)
+  q.set(
+   "status",
+   params.status
+  );
+
+
+ if(params?.dueBefore)
+  q.set(
+   "dueBefore",
+   String(params.dueBefore)
+  );
+
+
+ if(params?.course)
+  q.set(
+   "course",
+   params.course
+  );
+
+
+ return req(
+  `${env.backend}/tasks${
+   q.toString()
+    ? `?${q}`
+    :""
+  }`,
+  {
+   method:"GET"
+  }
+ );
+
 }
 
-export async function plannerDelete(id: string) {
-  return req<{ ok: boolean }>(`${env.backend}/tasks/${encodeURIComponent(id)}`, { method: "DELETE" })
+
+
+export function plannerPlan(
+ id:string,
+ cram=false
+){
+
+ return req(
+  `${env.backend}/tasks/${encodeURIComponent(id)}/plan`,
+  {
+   method:"POST",
+   headers:jsonHeaders(),
+   body:JSON.stringify({
+    cram
+   })
+  }
+ );
+
 }
 
-export async function plannerCreateWithFiles(data: { text?: string; title?: string; course?: string; type?: string; files?: File[] }) {
-  const formData = new FormData()
-  if (data.text) formData.append('q', data.text)
-  if (data.title) formData.append('title', data.title)
-  if (data.course) formData.append('course', data.course)
-  if (data.type) formData.append('type', data.type)
-  if (data.files) {
-    for (const file of data.files) {
-      formData.append('file', file, file.name)
-    }
+
+
+export function plannerWeekly(
+ cram=false
+){
+
+ return req(
+  `${env.backend}/planner/weekly`,
+  {
+   method:"POST",
+   headers:jsonHeaders(),
+   body:JSON.stringify({
+    cram
+   })
+  }
+ );
+
+}
+
+
+
+export function plannerMaterials(
+ id:string,
+ kind:
+  |"summary"
+  |"studyGuide"
+  |"flashcards"
+  |"quiz"
+){
+
+ return req(
+  `${env.backend}/tasks/${encodeURIComponent(id)}/materials`,
+  {
+   method:"POST",
+   headers:jsonHeaders(),
+   body:JSON.stringify({
+    kind
+   })
+  }
+ );
+
+}
+
+
+
+export function connectPlannerStream(
+ sid:string,
+ onEvent:(event:PlannerEvent)=>void
+){
+
+ const ws =
+ new WebSocket(
+  wsURL(
+   `/ws/planner?sid=${encodeURIComponent(sid)}`
+  )
+ );
+
+
+ ws.onmessage=(m)=>{
+
+  try{
+
+   onEvent(
+    JSON.parse(
+     m.data as string
+    )
+   );
+
+  }catch{}
+
+ };
+
+
+ return {
+
+  ws,
+
+  close(){
+
+   try{
+    ws.close();
+   }catch{}
+
   }
 
-  return req<{ ok: boolean; task: PlannerTask & { files?: any[] } }>(`${env.backend}/tasks`, {
-    method: "POST",
-    body: formData,
-    timeout: Math.max(env.timeout, 300000),
-  })
+ };
+
 }
 
-export async function plannerUploadFiles(taskId: string, files: File[]) {
-  const formData = new FormData()
-  for (const file of files) {
-    formData.append('file', file, file.name)
+
+
+export function plannerUpdate(
+ id:string,
+ patch:Partial<PlannerTask>
+){
+
+ return req(
+  `${env.backend}/tasks/${encodeURIComponent(id)}`,
+  {
+   method:"PATCH",
+   headers:jsonHeaders(),
+   body:JSON.stringify(patch)
   }
+ );
 
-  return req<{ ok: boolean; files: any[] }>(`${env.backend}/tasks/${encodeURIComponent(taskId)}/files`, {
-    method: "POST",
-    body: formData,
-    timeout: Math.max(env.timeout, 300000),
-  })
 }
 
-export async function plannerDeleteFile(taskId: string, fileId: string) {
-  return req<{ ok: boolean }>(`${env.backend}/tasks/${encodeURIComponent(taskId)}/files/${encodeURIComponent(fileId)}`, {
-    method: "DELETE"
-  })
+
+
+export function plannerDelete(
+ id:string
+){
+
+ return req(
+  `${env.backend}/tasks/${encodeURIComponent(id)}`,
+  {
+   method:"DELETE"
+  }
+ );
+
 }
+
+
+
+/* =========================
+   DEBATE
+========================= */
+
 
 export type DebateStartResponse = {
-  ok: boolean;
-  debateId: string;
-  session: {
-    id: string;
-    topic: string;
-    position: "for" | "against";
-    createdAt: number;
-  };
-  stream: string;
-  error?: string;
-}
+
+ ok:boolean;
+
+ debateId:string;
+
+ session:any;
+
+ stream:string;
+
+ error?:string;
+
+};
+
+
 
 export type DebateSession = {
-  id: string;
-  topic: string;
-  position: "for" | "against";
-  messages: Array<{
-    role: "user" | "assistant";
-    content: string;
-    timestamp: number;
-  }>;
-  createdAt: number;
+
+ id:string;
+
+ topic:string;
+
+ position:
+  |"for"
+  |"against";
+
+ messages:any[];
+
+ createdAt:number;
+
+};
+
+
+
+export function startDebate(
+ topic:string,
+ position:"for"|"against"
+){
+
+ return req<DebateStartResponse>(
+  `${env.backend}/debate/start`,
+  {
+   method:"POST",
+   headers:jsonHeaders(),
+   body:JSON.stringify({
+    topic,
+    position
+   }),
+   timeout:30000
+  }
+ );
+
 }
 
-export async function startDebate(topic: string, position: "for" | "against") {
-  return req<DebateStartResponse>(`${env.backend}/debate/start`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ topic, position }),
-    timeout: 30000,
-  })
+
+
+export function submitDebateArgument(
+ debateId:string,
+ argument:string
+){
+
+ return req(
+  `${env.backend}/debate/${encodeURIComponent(debateId)}/argue`,
+  {
+   method:"POST",
+   headers:jsonHeaders(),
+   body:JSON.stringify({
+    argument
+   }),
+   timeout:120000
+  }
+ );
+
 }
 
-export async function submitDebateArgument(debateId: string, argument: string) {
-  return req<{ ok: boolean; message: string; error?: string }>(`${env.backend}/debate/${encodeURIComponent(debateId)}/argue`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ argument }),
-    timeout: 120000,
-  })
+
+
+export function getDebateSession(
+ debateId:string
+){
+
+ return req(
+  `${env.backend}/debate/${encodeURIComponent(debateId)}`,
+  {
+   method:"GET"
+  }
+ );
+
 }
 
-export async function getDebateSession(debateId: string) {
-  return req<{ ok: boolean; session: DebateSession; error?: string }>(`${env.backend}/debate/${encodeURIComponent(debateId)}`, {
-    method: "GET",
-  })
+
+
+export function listDebates(){
+
+ return req(
+  `${env.backend}/debates`,
+  {
+   method:"GET"
+  }
+ );
+
 }
 
-export async function listDebates() {
-  return req<{ ok: boolean; debates: Array<any>; error?: string }>(`${env.backend}/debates`, {
-    method: "GET",
-  })
+
+
+export function deleteDebate(
+ debateId:string
+){
+
+ return req(
+  `${env.backend}/debate/${encodeURIComponent(debateId)}`,
+  {
+   method:"DELETE"
+  }
+ );
+
 }
 
-export async function deleteDebate(debateId: string) {
-  return req<{ ok: boolean; message: string; error?: string }>(`${env.backend}/debate/${encodeURIComponent(debateId)}`, {
-    method: "DELETE",
-  })
+
+
+export function surrenderDebate(
+ debateId:string
+){
+
+ return req(
+  `${env.backend}/debate/${encodeURIComponent(debateId)}/surrender`,
+  {
+   method:"POST",
+   headers:jsonHeaders()
+  }
+ );
+
 }
 
-export async function surrenderDebate(debateId: string) {
-  return req<{ ok: boolean; message: string; error?: string }>(`${env.backend}/debate/${encodeURIComponent(debateId)}/surrender`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-  })
+
+
+export function analyzeDebate(
+ debateId:string
+){
+
+ return req(
+  `${env.backend}/debate/${encodeURIComponent(debateId)}/analyze`,
+  {
+   method:"POST",
+   headers:jsonHeaders(),
+   timeout:60000
+  }
+ );
+
 }
 
-export type DebateAnalysis = {
-  winner: "user" | "ai" | "draw";
-  reason: string;
-  userStrengths: string[];
-  aiStrengths: string[];
-  userWeaknesses: string[];
-  aiWeaknesses: string[];
-  keyMoments: string[];
-  overallAssessment: string;
+
+
+/* =========================
+   QUIZ
+========================= */
+
+
+export type QuizEvent = any;
+
+
+
+export function quizStart(
+ topic:string
+){
+
+ return req(
+  `${env.backend}/quiz`,
+  {
+   method:"POST",
+   headers:jsonHeaders(),
+   body:JSON.stringify({
+    topic
+   })
+  }
+ );
+
 }
 
-export async function analyzeDebate(debateId: string) {
-  return req<{ ok: boolean; analysis: DebateAnalysis; session: DebateSession; error?: string }>(`${env.backend}/debate/${encodeURIComponent(debateId)}/analyze`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    timeout: 60000,
-  })
+
+
+export function connectQuizStream(
+ quizId:string,
+ onEvent:(event:QuizEvent)=>void
+){
+
+ const ws =
+ new WebSocket(
+  wsURL(
+   `/ws/quiz?quizId=${encodeURIComponent(quizId)}`
+  )
+ );
+
+
+ ws.onmessage=(m)=>{
+
+  try{
+
+   onEvent(
+    JSON.parse(
+     m.data as string
+    )
+   );
+
+  }catch{}
+
+ };
+
+
+ return {
+
+  ws,
+
+  close(){
+
+   try{
+    ws.close();
+   }catch{}
+
+  }
+
+ };
+
 }
 
-export function err(e: unknown) {
-  return e instanceof Error ? e.message : String(e);
+
+
+/* =========================
+   ERROR HELPER
+========================= */
+
+
+export function err(
+ e:unknown
+){
+
+ return e instanceof Error
+  ? e.message
+  : String(e);
+
 }
