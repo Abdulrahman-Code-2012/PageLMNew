@@ -17,11 +17,9 @@ export const config = {
   provider: process.env.LLM_PROVIDER || 'openrouter',
   embeddings_provider: process.env.EMB_PROVIDER || 'gemini',
 
-  // OpenRouter
-  openrouter: process.env.OPENROUTER_API_KEY || '',
-  openrouter_model:
-    process.env.OPENROUTER_MODEL ||
-    'google/gemini-2.0-flash-exp:free',
+openrouter_model:
+  process.env.OPENROUTER_MODEL ||
+  'openrouter/free',
 
   // Gemini
   gemini:
