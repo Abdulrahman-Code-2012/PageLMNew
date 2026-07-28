@@ -4,7 +4,7 @@ import path from 'path'
 const envPath = path.resolve(process.cwd(), '.env')
 
 if (fs.existsSync(envPath)) {
-  process.loadEnvFile(envPath);
+  process.loadEnvFile(envPath)
 }
 
 export const config = {
@@ -17,26 +17,37 @@ export const config = {
   provider: process.env.LLM_PROVIDER || 'openrouter',
   embeddings_provider: process.env.EMB_PROVIDER || 'gemini',
 
-openrouter_model:
-  process.env.OPENROUTER_MODEL ||
-  'openrouter/free',
+  // =========================
+  // OpenRouter
+  // =========================
+  openrouter:
+    process.env.OPENROUTER_API_KEY || '',
 
+  openrouter_model:
+    process.env.OPENROUTER_MODEL ||
+    'google/gemini-2.0-flash-lite-001:free',
+
+
+  // =========================
   // Gemini
+  // =========================
   gemini:
-    process.env.gemini ||
     process.env.GOOGLE_API_KEY ||
+    process.env.gemini ||
     '',
 
   gemini_model:
-    process.env.gemini_model ||
+    process.env.GEMINI_MODEL ||
     'gemini-1.5-pro',
 
   gemini_embed_model:
-  process.env.GEMINI_EMBED_MODEL ||
-  process.env.gemini_embed_model ||
-  'models/gemini-embedding-001',
+    process.env.GEMINI_EMBED_MODEL ||
+    'models/gemini-embedding-001',
 
+
+  // =========================
   // OpenAI
+  // =========================
   openai:
     process.env.OPENAI_API_KEY || '',
 
@@ -51,65 +62,20 @@ openrouter_model:
     process.env.OPENAI_EMBED_MODEL ||
     'text-embedding-3-large',
 
-  // Claude
-  claude:
-    process.env.ANTHROPIC_API_KEY || '',
 
-  claude_model:
-    process.env.CLAUDE_MODEL ||
-    'claude-3-5-sonnet-latest',
-
-  // Grok / xAI
-  grok:
-    process.env.XAI_API_KEY || '',
-
-  grok_model:
-    process.env.GROK_MODEL ||
-    'grok-2-latest',
-
-  grok_base:
-    process.env.GROK_BASE ||
-    'https://api.x.ai/v1',
-
-  // Groq
-  groq:
-    process.env.GROQ_API_KEY || '',
-
-  groq_model:
-    process.env.GROQ_MODEL ||
-    'llama-3.1-70b-versatile',
-
-  // MiniMax
-  minimax:
-    process.env.MINIMAX_API_KEY || '',
-
-  minimax_model:
-    process.env.MINIMAX_MODEL ||
-    'MiniMax-M3',
-
-  // Ollama
-  ollama: {
-    model:
-      process.env.OLLAMA_MODEL ||
-      'llama4',
-
-    embedModel:
-      process.env.OLLAMA_EMBED_MODEL ||
-      '',
-
-    baseUrl:
-      process.env.OLLAMA_BASE_URL ||
-      'http://localhost:11434'
-  },
-
+  // =========================
   // LLM Settings
+  // =========================
   temp:
     Number(process.env.LLM_TEMP || 0.7),
 
   max_tokens:
     Number(process.env.LLM_MAXTOK || 8192),
 
+
+  // =========================
   // Server
+  // =========================
   port:
     Number(process.env.PORT || 5000),
 
@@ -121,7 +87,10 @@ openrouter_model:
     process.env.VITE_FRONTEND_URL ||
     'http://localhost:5173',
 
+
+  // =========================
   // TTS
+  // =========================
   tts_provider:
     process.env.TTS_PROVIDER ||
     'edge',
@@ -130,51 +99,10 @@ openrouter_model:
     process.env.FFMPEG_PATH ||
     'ffmpeg',
 
-  tts_voice_edge:
-    process.env.TTS_VOICE_EDGE ||
-    'en-US-AvaNeural',
 
-  tts_voice_alt_edge:
-    process.env.TTS_VOICE_ALT_EDGE ||
-    'en-US-AndrewNeural',
-
-  eleven_api_key:
-    process.env.ELEVEN_API_KEY ||
-    '',
-
-  eleven_voice_a:
-    process.env.ELEVEN_VOICE_A ||
-    '',
-
-  eleven_voice_b:
-    process.env.ELEVEN_VOICE_B ||
-    '',
-
-  google_creds:
-    process.env.GOOGLE_APPLICATION_CREDENTIALS ||
-    '',
-
-  tts_voice_google:
-    process.env.TTS_VOICE_GOOGLE ||
-    'en-US-Neural2-F',
-
-  tts_voice_alt_google:
-    process.env.TTS_VOICE_ALT_GOOGLE ||
-    'en-US-Neural2-D',
-
-  speech_sdk_model:
-    process.env.SPEECH_SDK_MODEL ||
-    'openai/gpt-4o-mini-tts',
-
-  speech_sdk_voice_a:
-    process.env.SPEECH_SDK_VOICE_A ||
-    'alloy',
-
-  speech_sdk_voice_b:
-    process.env.SPEECH_SDK_VOICE_B ||
-    'echo',
-
+  // =========================
   // Transcription
+  // =========================
   transcription_provider:
     process.env.TRANSCRIPTION_PROVIDER ||
     'openai',
@@ -183,7 +111,8 @@ openrouter_model:
     process.env.ASSEMBLYAI_API_KEY ||
     '',
 
+
   google_project_id:
     process.env.GOOGLE_CLOUD_PROJECT_ID ||
     '',
-};
+}
