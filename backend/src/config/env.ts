@@ -1,118 +1,320 @@
-import fs from 'fs'
-import path from 'path'
+import fs from "fs";
+import path from "path";
 
-const envPath = path.resolve(process.cwd(), '.env')
+const envPath = path.resolve(process.cwd(), ".env");
 
 if (fs.existsSync(envPath)) {
-  process.loadEnvFile(envPath)
+  process.loadEnvFile(envPath);
 }
 
 export const config = {
-  db_mode: process.env.db_mode || 'json',
 
-  url: process.env.VITE_BACKEND_URL || '',
-  timeout: Number(process.env.VITE_TIMEOUT || 90000),
+  // Database
+  db_mode:
+    process.env.db_mode ||
+    "json",
 
-  // AI Provider
-  provider: process.env.LLM_PROVIDER || 'openrouter',
-  embeddings_provider: process.env.EMB_PROVIDER || 'gemini',
+
+  // Frontend / Backend
+  url:
+    process.env.VITE_BACKEND_URL ||
+    "",
+
+  timeout:
+    Number(process.env.VITE_TIMEOUT || 90000),
+
 
   // =========================
-  // OpenRouter
+  // AI PROVIDERS
   // =========================
+
+  provider:
+    process.env.LLM_PROVIDER ||
+    "openrouter",
+
+  embeddings_provider:
+    process.env.EMB_PROVIDER ||
+    "gemini",
+
+
+
+  // =========================
+  // OPENROUTER
+  // =========================
+
   openrouter:
-    process.env.OPENROUTER_API_KEY || '',
+    process.env.OPENROUTER_API_KEY ||
+    "",
+
 
   openrouter_model:
     process.env.OPENROUTER_MODEL ||
-    'google/gemini-2.0-flash-lite-001:free',
+    "google/gemini-2.0-flash-lite-001:free",
+
 
 
   // =========================
-  // Gemini
+  // GEMINI
   // =========================
+
   gemini:
     process.env.GOOGLE_API_KEY ||
     process.env.gemini ||
-    '',
+    "",
+
 
   gemini_model:
-    process.env.GEMINI_MODEL ||
-    'gemini-1.5-pro',
+    process.env.gemini_model ||
+    "gemini-1.5-pro",
+
 
   gemini_embed_model:
     process.env.GEMINI_EMBED_MODEL ||
-    'models/gemini-embedding-001',
+    process.env.gemini_embed_model ||
+    "models/gemini-embedding-001",
+
 
 
   // =========================
-  // OpenAI
+  // OPENAI
   // =========================
+
   openai:
-    process.env.OPENAI_API_KEY || '',
+    process.env.OPENAI_API_KEY ||
+    "",
+
 
   openai_embed:
-    process.env.OPENAI_EMBED_API_KEY || '',
+    process.env.OPENAI_EMBED_API_KEY ||
+    "",
+
 
   openai_model:
     process.env.OPENAI_MODEL ||
-    'gpt-4o-mini',
+    "gpt-4o-mini",
+
 
   openai_embed_model:
     process.env.OPENAI_EMBED_MODEL ||
-    'text-embedding-3-large',
+    "text-embedding-3-large",
+
 
 
   // =========================
-  // LLM Settings
+  // CLAUDE
   // =========================
+
+  claude:
+    process.env.ANTHROPIC_API_KEY ||
+    "",
+
+
+  claude_model:
+    process.env.CLAUDE_MODEL ||
+    "claude-3-5-sonnet-latest",
+
+
+
+  // =========================
+  // GROK
+  // =========================
+
+  grok:
+    process.env.XAI_API_KEY ||
+    "",
+
+
+  grok_model:
+    process.env.GROK_MODEL ||
+    "grok-2-latest",
+
+
+  grok_base:
+    process.env.GROK_BASE ||
+    "https://api.x.ai/v1",
+
+
+
+  // =========================
+  // GROQ
+  // =========================
+
+  groq:
+    process.env.GROQ_API_KEY ||
+    "",
+
+
+  groq_model:
+    process.env.GROQ_MODEL ||
+    "llama-3.1-70b-versatile",
+
+
+
+  // =========================
+  // MINIMAX
+  // =========================
+
+  minimax:
+    process.env.MINIMAX_API_KEY ||
+    "",
+
+
+  minimax_model:
+    process.env.MINIMAX_MODEL ||
+    "MiniMax-M3",
+
+
+
+  // =========================
+  // OLLAMA
+  // =========================
+
+  ollama: {
+
+    model:
+      process.env.OLLAMA_MODEL ||
+      "llama4",
+
+
+    embedModel:
+      process.env.OLLAMA_EMBED_MODEL ||
+      "",
+
+
+    baseUrl:
+      process.env.OLLAMA_BASE_URL ||
+      "http://localhost:11434"
+  },
+
+
+
+  // =========================
+  // LLM SETTINGS
+  // =========================
+
   temp:
     Number(process.env.LLM_TEMP || 0.7),
+
 
   max_tokens:
     Number(process.env.LLM_MAXTOK || 8192),
 
 
+
   // =========================
-  // Server
+  // SERVER
   // =========================
+
   port:
     Number(process.env.PORT || 5000),
 
+
   baseUrl:
     process.env.VITE_BACKEND_URL ||
-    'http://localhost:5000',
+    "http://localhost:5000",
+
 
   frontendUrl:
     process.env.VITE_FRONTEND_URL ||
-    'http://localhost:5173',
+    "http://localhost:5173",
+
 
 
   // =========================
   // TTS
   // =========================
+
   tts_provider:
     process.env.TTS_PROVIDER ||
-    'edge',
+    "edge",
+
 
   ffmpeg:
     process.env.FFMPEG_PATH ||
-    'ffmpeg',
+    "ffmpeg",
+
+
+  tts_voice_edge:
+    process.env.TTS_VOICE_EDGE ||
+    "en-US-AvaNeural",
+
+
+  tts_voice_alt_edge:
+    process.env.TTS_VOICE_ALT_EDGE ||
+    "en-US-AndrewNeural",
+
+
+
+  // ElevenLabs
+
+  eleven_api_key:
+    process.env.ELEVEN_API_KEY ||
+    "",
+
+
+  eleven_voice_a:
+    process.env.ELEVEN_VOICE_A ||
+    "",
+
+
+  eleven_voice_b:
+    process.env.ELEVEN_VOICE_B ||
+    "",
+
+
+
+  // Google TTS
+
+  google_creds:
+    process.env.GOOGLE_APPLICATION_CREDENTIALS ||
+    "",
+
+
+  tts_voice_google:
+    process.env.TTS_VOICE_GOOGLE ||
+    "en-US-Neural2-F",
+
+
+  tts_voice_alt_google:
+    process.env.TTS_VOICE_ALT_GOOGLE ||
+    "en-US-Neural2-D",
+
+
+
+  // OpenAI TTS
+
+  speech_sdk_model:
+    process.env.SPEECH_SDK_MODEL ||
+    "openai/gpt-4o-mini-tts",
+
+
+  speech_sdk_voice_a:
+    process.env.SPEECH_SDK_VOICE_A ||
+    "alloy",
+
+
+  speech_sdk_voice_b:
+    process.env.SPEECH_SDK_VOICE_B ||
+    "echo",
+
 
 
   // =========================
-  // Transcription
+  // TRANSCRIPTION
   // =========================
+
   transcription_provider:
     process.env.TRANSCRIPTION_PROVIDER ||
-    'openai',
+    "openai",
+
 
   assemblyai_api_key:
     process.env.ASSEMBLYAI_API_KEY ||
-    '',
+    "",
 
 
   google_project_id:
     process.env.GOOGLE_CLOUD_PROJECT_ID ||
-    '',
-}
+    "",
+
+};
