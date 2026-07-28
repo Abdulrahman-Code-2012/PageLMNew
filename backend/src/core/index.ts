@@ -1,13 +1,6 @@
 import server from '../utils/server/server';
 import { registerRoutes } from './router';
 import { loggerMiddleware } from './middleware';
-import { cfg } from './config'; // <-- add this (check path if different)
-
-console.log({
-    provider: cfg.embeddings_provider,
-    model: cfg.gemini_embed_model,
-    api: !!cfg.gemini
-});
 
 const app = server();
 
@@ -49,10 +42,12 @@ app.use((req: any, res: any, next: any) => {
         "86400"
     );
 
+
     if (req.method === "OPTIONS") {
         res.statusCode = 204;
         return res.end();
     }
+
 
     next();
 });
