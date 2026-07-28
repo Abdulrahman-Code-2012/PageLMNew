@@ -13,7 +13,7 @@ export const makeLLM: MkLLM = (cfg: any) => {
   });
 
   const m = new ChatOpenAI({
-    model: cfg.openrouter_model || "google/gemini-2.5-flash",
+   model: cfg.openrouter_model || "google/gemini-2.0-flash-exp:free",
     apiKey: cfg.openrouter || "",
     configuration: {
   baseURL: "https://openrouter.ai/api/v1",
