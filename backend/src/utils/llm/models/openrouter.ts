@@ -16,8 +16,12 @@ export const makeLLM: MkLLM = (cfg: any) => {
     model: cfg.openrouter_model || "google/gemini-2.5-flash",
     apiKey: cfg.openrouter || "",
     configuration: {
-      baseURL: "https://openrouter.ai/api/v1",
-    },
+  baseURL: "https://openrouter.ai/api/v1",
+  defaultHeaders: {
+    "HTTP-Referer": "https://pagelmnew-9.onrender.com",
+    "X-Title": "PageLM"
+  }
+},
     temperature: cfg.temp ?? 0.7,
     maxTokens: cfg.max_tokens,
   });
