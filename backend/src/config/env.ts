@@ -49,7 +49,7 @@ export const config = {
 
   openrouter_model:
     process.env.OPENROUTER_MODEL ||
-    "google/gemini-2.0-flash-lite-001:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
 
 
 
