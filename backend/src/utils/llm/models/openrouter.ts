@@ -1,6 +1,6 @@
 import { ChatOpenAI } from '@langchain/openai'
 import type { MkLLM, MkEmb, EmbeddingsLike, Msg } from './types'
- 
+
 // Primary model comes from env (OPENROUTER_MODEL). These are backups tried
 // in order if the primary comes back "model unavailable / not found" (404).
 // Free-tier slugs on OpenRouter rotate without notice, so this list may need
@@ -10,7 +10,7 @@ const FALLBACK_MODELS = [
   "openai/gpt-oss-20b:free",
   "qwen/qwen3-coder:free",
 ]
- 
+
 // Only retry on errors that mean "this model slug is dead/unavailable",
 // not on things like rate limits, auth errors, or bad input.
 const isModelUnavailableError = (err: any): boolean => {
@@ -21,7 +21,7 @@ const isModelUnavailableError = (err: any): boolean => {
     /model.*(unavailable|not found|does not exist)/i.test(msg)
   )
 }
- 
+
 export const makeLLM: MkLLM = (cfg: any) => {
   console.log("[OpenRouter Debug]", {
     keyExists: !!cfg.openrouter,
@@ -32,21 +32,21 @@ export const makeLLM: MkLLM = (cfg: any) => {
     model: cfg.openrouter_model,
     baseURL: "https://openrouter.ai/api/v1",
   })
- 
+
   if (!cfg.openrouter) {
     throw new Error("Missing OPENROUTER_API_KEY")
   }
- 
+
   const primaryModel =
     cfg.openrouter_model || FALLBACK_MODELS[0]
- 
+
   // Build the ordered list of models to try: primary first, then any
   // fallbacks not already equal to the primary.
   const modelChain = [
     primaryModel,
     ...FALLBACK_MODELS.filter((m) => m !== primaryModel),
   ]
- 
+
   const buildClient = (model: string) =>
     new ChatOpenAI({
       model,
@@ -60,10 +60,29 @@ export const makeLLM: MkLLM = (cfg: any) => {
       },
       temperature: cfg.temp ?? 0.7,
       maxTokens: cfg.max_tokens ?? 8192,
+      // Without this, a model that hangs (rather than erroring) leaves the
+      // request pending forever — the frontend never gets an "error" event
+      // and just sits on "connecting". Fail fast so the fallback chain
+      // below can move to the next model instead of hanging.
+      timeout: cfg.openrouter_timeout_ms ?? 30_000,
     })
- 
+
   const clients = modelChain.map(buildClient)
- 
+
+  // Treat a client-side timeout the same as a "model unavailable" error —
+  // it should move on to the next fallback rather than surfacing as a
+  // hard failure, since a slow/overloaded free model isn't necessarily
+  // permanently dead.
+  const isTimeoutError = (err: any): boolean => {
+    const msg: string = err?.message || ""
+    return (
+      err?.name === "TimeoutError" ||
+      err?.code === "ETIMEDOUT" ||
+      err?.code === "ECONNABORTED" ||
+      /timed?\s?out/i.test(msg)
+    )
+  }
+
   const invokeWithFallback = async (ms: Msg[]) => {
     let lastErr: any
     for (let i = 0; i < clients.length; i++) {
@@ -78,27 +97,27 @@ export const makeLLM: MkLLM = (cfg: any) => {
         return result
       } catch (err: any) {
         lastErr = err
-        if (!isModelUnavailableError(err)) {
-          // Not a "model is dead" error (e.g. rate limit, bad request) —
-          // don't burn through fallbacks, just surface it.
+        if (!isModelUnavailableError(err) && !isTimeoutError(err)) {
+          // Not a "model is dead/slow" error (e.g. rate limit, bad
+          // request, auth) — don't burn through fallbacks, just surface it.
           throw err
         }
         console.warn(
-          `[OpenRouter] Model "${modelChain[i]}" unavailable, trying next fallback...`,
+          `[OpenRouter] Model "${modelChain[i]}" unavailable or timed out, trying next fallback...`,
           err?.message || err
         )
       }
     }
     throw lastErr
   }
- 
+
   return {
     invoke: invokeWithFallback,
     call: invokeWithFallback,
   }
 }
- 
- 
+
+
 // OpenRouter does not provide embeddings
 // Keep Gemini embeddings separate
 export const makeEmbeddings: MkEmb = (_cfg: any): EmbeddingsLike => {
@@ -106,4 +125,3 @@ export const makeEmbeddings: MkEmb = (_cfg: any): EmbeddingsLike => {
     "OpenRouter embeddings disabled. Use Gemini embeddings."
   )
 }
- 
