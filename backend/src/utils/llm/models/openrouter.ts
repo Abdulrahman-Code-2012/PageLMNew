@@ -65,6 +65,13 @@ export const makeLLM: MkLLM = (cfg: any) => {
       // and just sits on "connecting". Fail fast so the fallback chain
       // below can move to the next model instead of hanging.
       timeout: cfg.openrouter_timeout_ms ?? 30_000,
+      // The underlying OpenAI SDK retries failed/timed-out requests on its
+      // own (default: 2 extra attempts) BEFORE the error ever reaches our
+      // catch block below. That means one "attempt" in our fallback chain
+      // could silently take up to 3x the configured timeout. Our fallback
+      // loop already handles retrying (via the next model), so disable the
+      // SDK's own retries to keep the timeout budget predictable.
+      maxRetries: 0,
     })
 
   const clients = modelChain.map(buildClient)
