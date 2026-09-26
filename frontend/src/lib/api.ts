@@ -106,7 +106,7 @@ const timeoutCtl = (ms:number)=>{
 };
 
 
-async function req<T = unknown>(
+async function req<T = any>(
   url:string,
   init:RequestInit & {
     timeout?:number
@@ -989,6 +989,18 @@ export function connectPodcastStream(
 ========================= */
 
 
+export type StudyMaterials = {
+  summary?: string;
+  keyPoints?: string[];
+  topics?: string[];
+  categories?: string[];
+  concepts?: string[];
+  questions?: string[];
+  [key: string]: unknown;
+};
+
+export type PodcastEvent = any;
+
 export type TranscriptionResponse = {
 
  ok:boolean;
@@ -1001,7 +1013,7 @@ export type TranscriptionResponse = {
 
  error?:string;
 
- studyMaterials?:unknown;
+ studyMaterials?:StudyMaterials;
 
 };
 
@@ -1110,6 +1122,35 @@ export type WeeklyPlan = {
 export type PlannerEvent = any;
 
 
+
+
+export function plannerCreateWithFiles(input:{text:string; files:File[]}){
+  const form = new FormData();
+  form.append("text", input.text);
+  for (const file of input.files) form.append("file", file, file.name);
+  return req<any>(env.backend + "/tasks/ingest", {
+    method:"POST",
+    body:form,
+    timeout:300000
+  });
+}
+
+export function plannerUploadFiles(id:string, files:File[]){
+  const form = new FormData();
+  for (const file of files) form.append("file", file, file.name);
+  return req<any>(env.backend + "/tasks/" + encodeURIComponent(id) + "/files", {
+    method:"POST",
+    body:form,
+    timeout:300000
+  });
+}
+
+export function plannerDeleteFile(taskId:string, fileId:string){
+  return req<any>(
+    env.backend + "/tasks/" + encodeURIComponent(taskId) + "/files/" + encodeURIComponent(fileId),
+    {method:"DELETE"}
+  );
+}
 
 export function plannerIngest(
  text:string
