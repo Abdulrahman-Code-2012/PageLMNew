@@ -991,11 +991,16 @@ export function connectPodcastStream(
 
 export type StudyMaterials = {
   summary?: string;
-  keyPoints?: string[];
-  topics?: string[];
-  categories?: string[];
+  keyPoints: string[];
+  topics: string[];
+  categories: string[];
   concepts?: string[];
   questions?: string[];
+  studyGuide: {
+    mainConcepts: string[];
+    questions: string[];
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 };
 
