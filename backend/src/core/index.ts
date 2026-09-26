@@ -1,85 +1,89 @@
-import server from '../utils/server/server';
-import { registerRoutes } from './router';
-import { loggerMiddleware } from './middleware';
+import server from "../utils/server/server";
+import { registerRoutes } from "./router";
+import { loggerMiddleware } from "./middleware";
 
 const app = server();
 
-
-// CORS FIRST (before everything)
+// CORS FIRST
 app.use((req: any, res: any, next: any) => {
+  const configuredOrigins = (process.env.CORS_ORIGINS || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
 
-    const origin = req.headers.origin;
+  const allowedOrigins = new Set([
+    "https://pagelmai.netlify.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    ...configuredOrigins,
+  ]);
 
-    const allowed = [
-        "https://pagelmai.netlify.app",
-        "http://localhost:5173"
-    ];
+  const origin = req.headers.origin;
 
-    if (origin && allowed.includes(origin)) {
-        res.setHeader(
-            "Access-Control-Allow-Origin",
-            origin
-        );
-    }
+  if (origin && allowedOrigins.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+  }
 
-    res.setHeader(
-        "Access-Control-Allow-Methods",
-        "GET,POST,PUT,PATCH,DELETE,OPTIONS"
-    );
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Max-Age", "86400");
 
-    res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Content-Type, Authorization"
-    );
+  if (req.method === "OPTIONS") {
+    res.statusCode = 204;
+    return res.end();
+  }
 
-    res.setHeader(
-        "Access-Control-Allow-Credentials",
-        "true"
-    );
-
-    res.setHeader(
-        "Access-Control-Max-Age",
-        "86400"
-    );
-
-
-    if (req.method === "OPTIONS") {
-        res.statusCode = 204;
-        return res.end();
-    }
-
-
-    next();
+  next();
 });
 
+// Health checks require no API keys or database access.
+app.get("/health", (_req: any, res: any) => {
+  res.status(200).json({
+    ok: true,
+    service: "pagelm-backend",
+    environment: process.env.NODE_ENV || "development",
+    timestamp: new Date().toISOString(),
+  });
+});
 
-// Logger
+app.get("/api/health", (_req: any, res: any) => {
+  res.status(200).json({
+    ok: true,
+    service: "pagelm-backend",
+    environment: process.env.NODE_ENV || "development",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.use(loggerMiddleware);
 
-
-// Static
 app.use(
-    app.serverStatic(
-        "/storage",
-        "./storage"
-    )
+  app.serverStatic(
+    "/storage",
+    "./storage"
+  )
 );
 
-
-// Routes
 registerRoutes(app);
 
-
-// Render
 const PORT = Number(process.env.PORT || 5000);
 
-app.listen(
-    PORT,
-    "0.0.0.0",
-    () => {
-        console.log(`[pagelm] running on port ${PORT}`);
-    }
-);
+if (!Number.isFinite(PORT) || PORT <= 0) {
+  throw new Error("Invalid PORT value: " + process.env.PORT);
+}
 
+const host = process.env.HOST || "0.0.0.0";
+
+app.listen(PORT, host, () => {
+  console.log("[pagelm] running on " + host + ":" + PORT);
+});
 
 export default app;

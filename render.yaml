@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: pagelm-backend
+    runtime: docker
+    repo: https://github.com/Abdulrahman-Code-2012/PageLMNew
+    branch: master
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 10000
+      - key: CORS_ORIGINS
+        value: https://pagelmai.netlify.app
