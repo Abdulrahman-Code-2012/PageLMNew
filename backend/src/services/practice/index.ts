@@ -1,4 +1,4 @@
-import llm from "../../utils/llm/models/llm"
+import llm from "../../utils/llm/llm"
 
 export type PracticeSource = {
   id: number
@@ -42,22 +42,17 @@ function nstr(x: any, fallback = "") {
 }
 
 const FIND_SYS = `PRIMARY OBJECTIVE
-You are selecting ONE real exam question on the requested topic, drawn ONLY
-from the list of approved past papers provided to you. You must never invent
-a question, a paper, or a paper code that is not in the provided list.
+You are selecting ONE real exam question on the requested topic, drawn ONLY from the list of approved past papers provided to you. You must never invent a question, a paper, or a paper code that is not in the provided list.
 
-If none of the provided papers plausibly contain a question on this topic,
-say so honestly in the questionText field rather than fabricating one.
+If none of the provided papers plausibly contain a question on this topic, say so honestly in the questionText field rather than fabricating one.
 
 OUTPUT CONTRACT
 Return only a JSON object, no markdown, no prose outside the JSON.
 
 SCHEMA
-"academicSourceId": the numeric id of the chosen source, copied exactly from
-  the provided list (never invented)
+"academicSourceId": the numeric id of the chosen source, copied exactly from the provided list (never invented)
 "paperTitle": the title of the chosen source, copied exactly from the list
-"questionRef": a short reference like "Q4" or "Section B, Q2" (your best
-  identification of where in that paper the question is)
+"questionRef": a short reference like "Q4" or "Section B, Q2" (your best identification of where in that paper the question is)
 "questionText": the question text, in plain English
 "imageUrl": null (diagrams are not yet extracted automatically)
 
@@ -65,20 +60,15 @@ VALIDATION
 All 5 keys present. academicSourceId must match one of the provided ids.`
 
 const GRADE_SYS = `PRIMARY OBJECTIVE
-Grade a student's answer to an exam question against real mark-scheme
-principles for this subject and question type. Do not invent marks the
-question could not plausibly carry; keep the awarded marks proportionate
-and realistic for an IGCSE-level question of this kind.
+Grade a student's answer to an exam question against real mark-scheme principles for this subject and question type. Do not invent marks the question could not plausibly carry; keep the awarded marks proportional and realistic for an IGCSE-level question of this kind.
 
 OUTPUT CONTRACT
 Return only a JSON object, no markdown, no prose outside the JSON.
 
 SCHEMA
 "marksAwarded": number, marks given to the student's answer
-"marksAvailable": number, total marks the question is worth (your best
-  estimate from the question's command words and structure)
-"feedback": string, 1-3 sentences explaining what was awarded and, if marks
-  were lost, what specific point(s) were missing`
+"marksAvailable": number, total marks the question is worth (your best estimate from the question's command words and structure)
+"feedback": string, 1-3 sentences explaining what was awarded and, if marks were lost, what specific point(s) were missing`
 
 async function ask(sys: string, userContent: string) {
   const msgs = [
