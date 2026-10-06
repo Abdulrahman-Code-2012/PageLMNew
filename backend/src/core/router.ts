@@ -9,6 +9,8 @@ import { plannerRoutes } from "./routes/planner";
 import { debateRoutes } from "./routes/debate";
 import { companionRoutes } from "./routes/companion";
 import { practiceRoutes } from "./routes/practice";
+import { multimodalRoutes } from "./routes/multimodal";
+import { classifiedRoutes } from "./routes/classified";
 
 export function registerRoutes(app: any) {
   chatRoutes(app);
@@ -22,4 +24,6 @@ export function registerRoutes(app: any) {
   debateRoutes(app);
   companionRoutes(app);
   practiceRoutes(app);
+  multimodalRoutes(app);
+  classifiedRoutes(app);
 }

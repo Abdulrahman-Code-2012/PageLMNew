@@ -24,12 +24,12 @@ export function parseMultipart(req: any): Promise<{ q: string; chatId?: string; 
     let failed = false
     const done = () => { if (!failed && ended && pending === 0) resolve({ q, chatId: chatId || undefined, files }) }
 
-    bb.on('field', (n, v) => { if (n === 'q') q = v; if (n === 'chatId') chatId = v })
+    bb.on('field', (n, v) => { if (n === 'q' || n === 'topic') q = v; if (n === 'chatId') chatId = v })
     bb.on('file', (_n, file, info: any) => {
       pending++
       const filename = info?.filename || 'file'
       const mimeType = info?.mimeType || info?.mime || 'application/octet-stream'
-      const fp = path.join(str, `${Date.now()}-${filename}`)
+      const fp = path.join(str, Date.now() + '-' + filename)
       const ws = fs.createWriteStream(fp)
       file.on('error', e => { failed = true; reject(e) })
       ws.on('error', e => { failed = true; reject(e) })
@@ -48,7 +48,7 @@ export async function handleUpload(a: { filePath: string; filename?: string; con
   const ns = a.namespace || 'pagelm'
   const txt = await extractText(fp, mime)
   if (!txt?.trim()) throw new Error('No valid content extracted from file.')
-  const out = `${fp}.txt`
+  const out = fp + '.txt'
   fs.writeFileSync(out, txt)
   const isO = process.env.LLM_PROVIDER === 'ollama'
   const _emb = isO
@@ -58,21 +58,14 @@ export async function handleUpload(a: { filePath: string; filename?: string; con
   return { stored: out }
 }
 
-async function extractText(filePath: string, mime: string) {
+export async function extractText(filePath: string, mime: string) {
   const raw = fs.readFileSync(filePath)
-  if (mime.includes('pdf')) {
-    const data = await pdf(raw)
-    return data.text
-  }
-  if (mime.includes('markdown')) {
-    return marked.parse(raw.toString())
-  }
-  if (mime.includes('plain')) {
-    return raw.toString()
-  }
+  if (mime.includes('pdf')) return (await pdf(raw)).text
+  if (mime.includes('markdown')) return marked.parse(raw.toString())
+  if (mime.includes('plain')) return raw.toString()
   if (mime.includes('wordprocessingml') || mime.includes('msword') || mime.includes('vnd.oasis.opendocument.text')) {
-    const r = await mammoth.extractRawText({ buffer: raw })
-    return r.value
+    return (await mammoth.extractRawText({ buffer: raw })).value
   }
+  if (mime.startsWith('image/')) return ''
   throw new Error('unsupported file type')
 }
